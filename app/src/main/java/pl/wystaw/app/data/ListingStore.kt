@@ -5,7 +5,8 @@ import org.json.JSONObject
 
 /**
  * Bieżące ogłoszenie zapisane w SharedPreferences, żeby usługa ułatwień dostępu
- * (działająca w osobnym komponencie) mogła je odczytać.
+ * (działająca w osobnym komponencie) mogła je odczytać. Zapis przez commit(), żeby był na dysku,
+ * zanim otworzy się OLX.
  *
  * „Uzbrojenie” oznacza: użytkownik kliknął „Otwórz OLX”, więc usługa ma wypełniać
  * formularz. Wygasa po [ARM_TTL_MS], żeby nie wpisywać starego ogłoszenia przypadkiem.
@@ -20,7 +21,7 @@ object ListingStore {
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     fun save(ctx: Context, listing: Listing) {
-        prefs(ctx).edit().putString(KEY_LISTING, listing.toJson().toString()).apply()
+        prefs(ctx).edit().putString(KEY_LISTING, listing.toJson().toString()).commit()
     }
 
     fun load(ctx: Context): Listing? {
@@ -33,17 +34,17 @@ object ListingStore {
      * usługa zaznacza tyle pierwszych zdjęć w systemowym wyborze zdjęć. 0 = brak zdjęć do dodania.
      */
     fun setPhotoCount(ctx: Context, count: Int) {
-        prefs(ctx).edit().putInt(KEY_PHOTO_COUNT, count).apply()
+        prefs(ctx).edit().putInt(KEY_PHOTO_COUNT, count).commit()
     }
 
     fun photoCount(ctx: Context): Int = prefs(ctx).getInt(KEY_PHOTO_COUNT, 0)
 
     fun arm(ctx: Context) {
-        prefs(ctx).edit().putLong(KEY_ARMED_AT, System.currentTimeMillis()).apply()
+        prefs(ctx).edit().putLong(KEY_ARMED_AT, System.currentTimeMillis()).commit()
     }
 
     fun disarm(ctx: Context) {
-        prefs(ctx).edit().remove(KEY_ARMED_AT).apply()
+        prefs(ctx).edit().remove(KEY_ARMED_AT).commit()
     }
 
     /** Znacznik czasu uzbrojenia albo 0, jeśli nieaktywne lub wygasło. */

@@ -1,11 +1,13 @@
 package pl.wystaw.app
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -54,8 +56,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var serviceEnabled by mutableStateOf(false)
         private set
 
-    /** Włączona i faktycznie działa – tylko wtedy Wystaw wypełni OLX (patrz [OlxFillService.running]). */
-    val serviceWorking: Boolean get() = serviceEnabled && OlxFillService.running
+    /**
+     * Włączona i faktycznie działa – tylko wtedy Wystaw wypełni OLX. Samo „włączona w ustawieniach” nie wystarcza:
+     * gdy system zabije proces usługi, Android oznacza ją jako zawieszoną i nie podłącza ponownie, choć w ustawieniach
+     * dalej jest włączona.
+     */
+    var serviceWorking by mutableStateOf(false)
+        private set
     var hasApiKey by mutableStateOf(AppSettings.current(app).apiKey.isNotBlank())
         private set
     var savedPhotosCount by mutableStateOf<Int?>(null)
@@ -199,6 +206,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             .mapNotNull { ComponentName.unflattenFromString(it) }
             .any { it == expected }
         serviceEnabled = enabled
+        // Ta lista zawiera tylko usługi podłączone przez system – zawieszonej tu nie ma.
+        val am = ctx.getSystemService(AccessibilityManager::class.java)
+        serviceWorking = enabled && am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+            .any { it.resolveInfo?.serviceInfo?.let { s -> ComponentName(s.packageName, s.name) } == expected }
         hasApiKey = AppSettings.current(ctx).apiKey.isNotBlank()
     }
 

@@ -55,6 +55,14 @@ tytuł/opis/cenę w formularz „Dodaj ogłoszenie”. Rozmawiamy po polsku.
   działa – ServiceRequiredScreen(stopped = true): „wyłącz i włącz ponownie” + jak zablokować Wystaw w ostatnich
   aplikacjach i ustawić baterię „Bez ograniczeń”/Autostart. `adb install -r` też podłącza zawieszoną usługę ponownie.
   UWAGA: `am force-stop pl.wystaw.app` WYŁĄCZA usługę w ustawieniach (użytkownik musi ją włączyć ręcznie) – nie używać.
+  18:55/18:58 znów zabite (SwipeUpClean, potem OneKeyClean = „wyczyść wszystko”). 19:03: usługa przywrócona przez
+  `adb install -r`, Wystaw zablokowany kłódką w ostatnich aplikacjach, Zasilanie = „Bez ograniczeń”, „Wstrzymaj
+  działanie aplikacji…” wyłączone.
+- 19:07 test: przesunięcie karty Wystaw W GÓRĘ (SwipeUpClean) zabija WSZYSTKIE procesy pakietu, także
+  `:fill` w osobnym procesie i mimo kłódki (kłódka chroni tylko przed „wyczyść wszystko”). Osobny proces wycofany.
+  Wykrywanie działania: `AccessibilityManager.getEnabledAccessibilityServiceList` (tylko podłączone usługi) w
+  refreshServiceState → `vm.serviceWorking`. Jedyne realne obejście: ukryć Wystaw z listy ostatnich aplikacji
+  (excludeFromRecents) – czeka na decyzję użytkownika.
   Wariant „stopped” ekranu jeszcze nieprzetestowany na telefonie.
 - Testy przez adb na tym Xiaomi: pierwszy `input tap` po `uiautomator dump` bywa gubiony – sprawdzać zrzutem ekranu.
 - SDK bez Android Studio: cmdline-tools, platform-tools, platforms;android-35, build-tools;35.0.0
