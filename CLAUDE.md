@@ -48,7 +48,8 @@ tytuł/opis/cenę w formularz „Dodaj ogłoszenie”. Rozmawiamy po polsku.
   opublikowanym ogłoszeniu są Stan i Paczkomat M (na zrzucie z 5 s sekcja Stan jeszcze się ładowała).
 - „Promuj ogłoszenie”: usługa zawsze klika „Nie promuj” (decyzja użytkownika) – po ID
   `monetization_vas_dont_promote_cta`, przez 2 min po swojej publikacji. Płatnego „Dodaj promowanie” nigdy nie klikać.
-  Jeszcze nieprzetestowane (w teście 17:50 kliknięte ręcznie przez adb).
+  Błąd do 19:20: szukano „/monetization_vas_dont_promote_cta”, a ekran jest w Compose i ID nie ma prefiksu
+  „pl.tablica:id/” – teraz porównanie substringAfterLast('/'). Po poprawce jeszcze nieprzetestowane.
 - 2026-10-24 18:07: po zamknięciu Wystaw z listy ostatnich aplikacji (MIUI „SwipeUpClean”) proces zginął, a usługa
   została w „Crashed services” – włączona w ustawieniach, ale niepodłączona, więc OLX zostawał pusty. Teraz
   `OlxFillService.running` (ustawiane w onServiceConnected/onDestroy) + `vm.serviceWorking`; gdy włączona, ale nie

@@ -102,7 +102,8 @@ class OlxFillService : AccessibilityService() {
         if (pkg in OLX_PACKAGES && System.currentTimeMillis() < skipPromoteUntil && ListingStore.armedAt(this) == 0L) {
             // Po naszej publikacji usługa jest rozbrojona – zostaje tylko pominięcie promowania.
             rootInActiveWindow?.let { root ->
-                findAll(root) { it.viewIdResourceName?.endsWith("/$DONT_PROMOTE_ID") == true }.firstOrNull()
+                // Ekran promowania jest w Compose: ID to sam testTag, bez prefiksu „pl.tablica:id/”.
+                findAll(root) { it.viewIdResourceName?.substringAfterLast('/') == DONT_PROMOTE_ID }.firstOrNull()
                     ?.takeIf { it.performAction(AccessibilityNodeInfo.ACTION_CLICK) }
                     ?.let { skipPromoteUntil = 0L }
             }
