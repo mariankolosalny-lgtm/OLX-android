@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Wystaw</string>
+    <string name="service_label">Wystaw – wypełnianie OLX</string>
+    <string name="service_description">Gdy otworzysz formularz dodawania ogłoszenia w aplikacji OLX, Wystaw wpisze w niego tytuł, opis i cenę przygotowane z Twoich zdjęć oraz pokaże pasek z pozostałymi polami. Usługa działa tylko w aplikacji OLX i tylko wtedy, gdy masz przygotowane ogłoszenie.</string>
+</resources>
