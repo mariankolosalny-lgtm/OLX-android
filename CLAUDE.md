@@ -62,7 +62,9 @@ tytuł/opis/cenę w formularz „Dodaj ogłoszenie”. Rozmawiamy po polsku.
   `:fill` w osobnym procesie i mimo kłódki (kłódka chroni tylko przed „wyczyść wszystko”). Osobny proces wycofany.
   Wykrywanie działania: `AccessibilityManager.getEnabledAccessibilityServiceList` (tylko podłączone usługi) w
   refreshServiceState → `vm.serviceWorking`. Jedyne realne obejście: ukryć Wystaw z listy ostatnich aplikacji
-  (excludeFromRecents) – czeka na decyzję użytkownika.
+  (excludeFromRecents) – zrobione 19:13 na prośbę użytkownika: MainActivity ma `android:excludeFromRecents="true"`.
+  Karta widoczna tylko póki Wystaw jest na wierzchu; po przejściu do OLX znika z ostatnich aplikacji (sprawdzone).
+  KeepAliveCard: Zasilanie „Bez ograniczeń”, wyłączone „Wstrzymaj działanie…”, powrót do Wystaw ikoną.
   Wariant „stopped” ekranu jeszcze nieprzetestowany na telefonie.
 - Testy przez adb na tym Xiaomi: pierwszy `input tap` po `uiautomator dump` bywa gubiony – sprawdzać zrzutem ekranu.
 - SDK bez Android Studio: cmdline-tools, platform-tools, platforms;android-35, build-tools;35.0.0

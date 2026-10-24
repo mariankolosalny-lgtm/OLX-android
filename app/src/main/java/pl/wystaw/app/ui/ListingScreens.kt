@@ -219,8 +219,8 @@ fun ServiceRequiredScreen(stopped: Boolean) {
         ) {
             if (stopped) {
                 Text(
-                    "Usługa jest włączona, ale system ją zatrzymał – zwykle po zamknięciu Wystaw z listy ostatnich " +
-                        "aplikacji. Bez niej formularz OLX zostanie pusty.",
+                    "Usługa jest włączona, ale system ją zatrzymał (np. przy oszczędzaniu baterii albo czyszczeniu " +
+                        "pamięci). Bez niej formularz OLX zostanie pusty.",
                     color = Muted, fontSize = 15.sp, lineHeight = 22.sp,
                 )
                 InfoCard(AmberBg) {
@@ -270,15 +270,18 @@ fun ServiceRequiredScreen(stopped: Boolean) {
     }
 }
 
-/** Jak nie dać MIUI/HyperOS zabić Wystaw (a z nim usługi). */
+/**
+ * Jak nie dać MIUI/HyperOS zabić Wystaw (a z nim usługi). Listy ostatnich aplikacji tu nie ma – Wystaw się z niej
+ * ukrywa (excludeFromRecents), bo przesunięcie karty zabijało usługę nawet z kłódką.
+ */
 @Composable
 private fun KeepAliveCard(number: Int, openAppInfo: () -> Unit) {
     InfoCard(Color.White) {
         Text("$number. Żeby system jej nie zatrzymywał", fontWeight = FontWeight.Bold)
         Text(
-            "• Nie zamykaj Wystaw przesunięciem z listy ostatnich aplikacji – albo przytrzymaj tam kafelek Wystaw " +
-                "i stuknij kłódkę, żeby go zablokować.\n" +
-                "• Informacje o aplikacji → Oszczędzanie baterii → Bez ograniczeń, i włącz Autostart.",
+            "• Informacje o aplikacji → Zasilanie → Bez ograniczeń.\n" +
+                "• Wyłącz „Wstrzymaj działanie aplikacji, jeśli nie jest używana”.\n" +
+                "• Wystaw nie pokazuje się na liście ostatnich aplikacji – wracasz do niego ikoną.",
             color = Muted, fontSize = 14.sp, lineHeight = 20.sp,
         )
         TextButton(onClick = openAppInfo) { Text("Informacje o aplikacji", color = Ink, fontWeight = FontWeight.Bold) }
