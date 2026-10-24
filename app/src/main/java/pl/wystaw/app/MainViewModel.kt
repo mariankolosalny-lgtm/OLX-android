@@ -50,8 +50,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var hasListing by mutableStateOf(ListingStore.load(app) != null)
         private set
     var error by mutableStateOf<String?>(null)
+    /** Usługa włączona w ustawieniach Ułatwień dostępu. */
     var serviceEnabled by mutableStateOf(false)
         private set
+
+    /** Włączona i faktycznie działa – tylko wtedy Wystaw wypełni OLX (patrz [OlxFillService.running]). */
+    val serviceWorking: Boolean get() = serviceEnabled && OlxFillService.running
     var hasApiKey by mutableStateOf(AppSettings.current(app).apiKey.isNotBlank())
         private set
     var savedPhotosCount by mutableStateOf<Int?>(null)

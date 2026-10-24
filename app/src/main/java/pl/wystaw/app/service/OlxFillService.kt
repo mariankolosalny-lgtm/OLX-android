@@ -20,6 +20,9 @@ import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import pl.wystaw.app.data.Listing
 import pl.wystaw.app.data.ListingStore
 
@@ -36,6 +39,14 @@ class OlxFillService : AccessibilityService() {
 
     companion object {
         val OLX_PACKAGES = setOf("pl.tablica", "com.olx.pl")
+
+        /**
+         * Czy usługa naprawdę działa (system ją podłączył). Samo „włączona w ustawieniach” nie wystarcza: gdy MIUI
+         * zabije proces (np. zamknięcie Wystaw z listy ostatnich aplikacji), Android oznacza usługę jako zawieszoną
+         * i nie podłącza jej ponownie, choć w ustawieniach dalej jest włączona. Stan Compose – ekran reaguje od razu.
+         */
+        var running by mutableStateOf(false)
+            private set
         private const val FILL_DELAY_MS = 350L
 
         private val TITLE_WORDS = listOf("tytuł", "tytul", "title")
@@ -133,7 +144,13 @@ class OlxFillService : AccessibilityService() {
 
     override fun onInterrupt() = Unit
 
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        running = true
+    }
+
     override fun onDestroy() {
+        running = false
         hideOverlay()
         super.onDestroy()
     }

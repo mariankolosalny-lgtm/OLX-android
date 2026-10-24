@@ -194,12 +194,22 @@ fun ReviewScreen(vm: MainViewModel) {
 
 // ---------- 0. Wymagana usługa ułatwień dostępu ----------
 
+/**
+ * [stopped] = usługa jest włączona w ustawieniach, ale nie działa – system zabił proces (np. zamknięcie Wystaw
+ * z listy ostatnich aplikacji na Xiaomi) i nie podłączył usługi ponownie. Pomaga wyłączenie i włączenie jej.
+ */
 @Composable
-fun ServiceRequiredScreen() {
+fun ServiceRequiredScreen(stopped: Boolean) {
     val context = LocalContext.current
+    val openAppInfo = {
+        context.startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+        )
+    }
+    val openAccessibility = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
 
     Column(Modifier.fillMaxSize()) {
-        TopBar("Włącz usługę Wystaw", onBack = null)
+        TopBar(if (stopped) "Usługa Wystaw nie działa" else "Włącz usługę Wystaw", onBack = null)
         Column(
             Modifier
                 .weight(1f)
@@ -207,6 +217,26 @@ fun ServiceRequiredScreen() {
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            if (stopped) {
+                Text(
+                    "Usługa jest włączona, ale system ją zatrzymał – zwykle po zamknięciu Wystaw z listy ostatnich " +
+                        "aplikacji. Bez niej formularz OLX zostanie pusty.",
+                    color = Muted, fontSize = 15.sp, lineHeight = 22.sp,
+                )
+                InfoCard(AmberBg) {
+                    Text("1. Wyłącz i włącz usługę", fontWeight = FontWeight.Bold, color = AmberText)
+                    Text(
+                        "Ułatwienia dostępu → Pobrane aplikacje → Wystaw → wyłącz, a potem włącz ponownie.",
+                        color = AmberText, fontSize = 14.sp, lineHeight = 20.sp,
+                    )
+                    TextButton(onClick = openAccessibility) {
+                        Text("Ułatwienia dostępu", color = AmberText, fontWeight = FontWeight.Bold)
+                    }
+                }
+                KeepAliveCard(number = 2, openAppInfo = openAppInfo)
+                Spacer(Modifier.height(8.dp))
+                return@Column
+            }
             Text(
                 "Wystaw wpisuje tytuł, opis i cenę w formularz OLX przez usługę ułatwień dostępu. " +
                     "Bez niej aplikacja nie zadziała – włącz ją raz, a ten ekran zniknie.",
@@ -219,11 +249,9 @@ fun ServiceRequiredScreen() {
                         "Jeśli tej opcji nie ma, najpierw spróbuj włączyć usługę (krok 2) i wróć tutaj.",
                     color = AmberText, fontSize = 14.sp, lineHeight = 20.sp,
                 )
-                TextButton(onClick = {
-                    context.startActivity(
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
-                    )
-                }) { Text("Informacje o aplikacji", color = AmberText, fontWeight = FontWeight.Bold) }
+                TextButton(onClick = openAppInfo) {
+                    Text("Informacje o aplikacji", color = AmberText, fontWeight = FontWeight.Bold)
+                }
             }
             InfoCard(AmberBg) {
                 Text("2. Włącz usługę", fontWeight = FontWeight.Bold, color = AmberText)
@@ -232,12 +260,28 @@ fun ServiceRequiredScreen() {
                         "Na Xiaomi poczekaj, aż odliczanie w ostrzeżeniu się skończy, i zatwierdź.",
                     color = AmberText, fontSize = 14.sp, lineHeight = 20.sp,
                 )
-                TextButton(onClick = {
-                    context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                }) { Text("Ułatwienia dostępu", color = AmberText, fontWeight = FontWeight.Bold) }
+                TextButton(onClick = openAccessibility) {
+                    Text("Ułatwienia dostępu", color = AmberText, fontWeight = FontWeight.Bold)
+                }
             }
+            KeepAliveCard(number = 3, openAppInfo = openAppInfo)
             Spacer(Modifier.height(8.dp))
         }
+    }
+}
+
+/** Jak nie dać MIUI/HyperOS zabić Wystaw (a z nim usługi). */
+@Composable
+private fun KeepAliveCard(number: Int, openAppInfo: () -> Unit) {
+    InfoCard(Color.White) {
+        Text("$number. Żeby system jej nie zatrzymywał", fontWeight = FontWeight.Bold)
+        Text(
+            "• Nie zamykaj Wystaw przesunięciem z listy ostatnich aplikacji – albo przytrzymaj tam kafelek Wystaw " +
+                "i stuknij kłódkę, żeby go zablokować.\n" +
+                "• Informacje o aplikacji → Oszczędzanie baterii → Bez ograniczeń, i włącz Autostart.",
+            color = Muted, fontSize = 14.sp, lineHeight = 20.sp,
+        )
+        TextButton(onClick = openAppInfo) { Text("Informacje o aplikacji", color = Ink, fontWeight = FontWeight.Bold) }
     }
 }
 
@@ -256,7 +300,7 @@ fun HandoffScreen(vm: MainViewModel) {
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            if (vm.serviceEnabled) {
+            if (vm.serviceWorking) {
                 InfoCard(GreenBg) {
                     Text("Usługa wypełniania włączona", fontWeight = FontWeight.Bold, color = GreenText)
                     Text("Wystaw sam wpisze tytuł, opis i cenę, gdy otworzysz formularz w OLX.", color = GreenText, fontSize = 14.sp)

@@ -49,6 +49,13 @@ tytuł/opis/cenę w formularz „Dodaj ogłoszenie”. Rozmawiamy po polsku.
 - „Promuj ogłoszenie”: usługa zawsze klika „Nie promuj” (decyzja użytkownika) – po ID
   `monetization_vas_dont_promote_cta`, przez 2 min po swojej publikacji. Płatnego „Dodaj promowanie” nigdy nie klikać.
   Jeszcze nieprzetestowane (w teście 17:50 kliknięte ręcznie przez adb).
+- 2026-10-24 18:07: po zamknięciu Wystaw z listy ostatnich aplikacji (MIUI „SwipeUpClean”) proces zginął, a usługa
+  została w „Crashed services” – włączona w ustawieniach, ale niepodłączona, więc OLX zostawał pusty. Teraz
+  `OlxFillService.running` (ustawiane w onServiceConnected/onDestroy) + `vm.serviceWorking`; gdy włączona, ale nie
+  działa – ServiceRequiredScreen(stopped = true): „wyłącz i włącz ponownie” + jak zablokować Wystaw w ostatnich
+  aplikacjach i ustawić baterię „Bez ograniczeń”/Autostart. `adb install -r` też podłącza zawieszoną usługę ponownie.
+  UWAGA: `am force-stop pl.wystaw.app` WYŁĄCZA usługę w ustawieniach (użytkownik musi ją włączyć ręcznie) – nie używać.
+  Wariant „stopped” ekranu jeszcze nieprzetestowany na telefonie.
 - Testy przez adb na tym Xiaomi: pierwszy `input tap` po `uiautomator dump` bywa gubiony – sprawdzać zrzutem ekranu.
 - SDK bez Android Studio: cmdline-tools, platform-tools, platforms;android-35, build-tools;35.0.0
   w %LOCALAPPDATA%\Android\Sdk. Budowa z JAVA_HOME = C:\ORLEN\Java\jdk-21.0.12.1 (skrypt szuka JBR ze Studio,

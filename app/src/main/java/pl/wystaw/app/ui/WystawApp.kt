@@ -57,17 +57,17 @@ import pl.wystaw.app.Screen
 
 @Composable
 fun WystawApp(vm: MainViewModel, onExit: () -> Unit) {
-    BackHandler { if (!vm.serviceEnabled || !vm.back()) onExit() }
+    BackHandler { if (!vm.serviceWorking || !vm.back()) onExit() }
 
     Box(
         Modifier
             .fillMaxSize()
-            .background(if (vm.screen == Screen.ANALYZING && vm.serviceEnabled) Ink else Ground)
+            .background(if (vm.screen == Screen.ANALYZING && vm.serviceWorking) Ink else Ground)
             .safeDrawingPadding()
     ) {
-        // Bez usługi ułatwień dostępu Wystaw nie wypełni OLX – dopóki jest wyłączona, pokazujemy tylko instrukcję.
-        if (!vm.serviceEnabled) {
-            ServiceRequiredScreen()
+        // Bez działającej usługi ułatwień dostępu Wystaw nie wypełni OLX – dopóki nie działa, pokazujemy tylko instrukcję.
+        if (!vm.serviceWorking) {
+            ServiceRequiredScreen(stopped = vm.serviceEnabled)
             return@Box
         }
         when (vm.screen) {
