@@ -27,6 +27,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -35,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -260,6 +263,10 @@ private fun PhotosScreen(vm: MainViewModel) {
     val gallery = rememberLauncherForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(MainViewModel.MAX_PHOTOS)
     ) { uris -> vm.addPhotos(uris) }
+    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
+        vm.onCameraResult(ok)
+    }
+    var addMenuOpen by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
         TopBar("Twoje zdjęcia", onBack = { vm.back() }) {
@@ -329,12 +336,29 @@ private fun PhotosScreen(vm: MainViewModel) {
                                         .fillMaxSize()
                                         .clip(RoundedCornerShape(12.dp))
                                         .border(1.5.dp, Color(0xFFA7ACB3), RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                                        }
+                                        .clickable { addMenuOpen = true }
                                         .semantics { contentDescription = "Dodaj zdjęcie" },
                                     contentAlignment = Alignment.Center,
-                                ) { Text("+", fontSize = 26.sp, color = Muted) }
+                                ) {
+                                    Text("+", fontSize = 26.sp, color = Muted)
+                                    // Kolejne zdjęcie: z aparatu albo z galerii.
+                                    DropdownMenu(expanded = addMenuOpen, onDismissRequest = { addMenuOpen = false }) {
+                                        DropdownMenuItem(
+                                            text = { Text("Zrób zdjęcie") },
+                                            onClick = {
+                                                addMenuOpen = false
+                                                camera.launch(vm.newCameraUri())
+                                            },
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Wybierz z galerii") },
+                                            onClick = {
+                                                addMenuOpen = false
+                                                gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                            },
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
