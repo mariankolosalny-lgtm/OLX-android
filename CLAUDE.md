@@ -74,6 +74,16 @@ tytuł/opis/cenę w formularz „Dodaj ogłoszenie”. Rozmawiamy po polsku.
 - Telefon: Xiaomi 2210129SG (HyperOS), kabel USB, debugowanie USB i „Instaluj przez USB” włączone
   (instalację z adb trzeba potwierdzić na telefonie). Na komputerze jest też Vysor (podgląd ekranu telefonu).
 
+- Dystrybucja (2026-10-24): GitHub Releases, workflow `.github/workflows/release.yml` na znacznik `v*`.
+  Stały klucz podpisu: `%USERPROFILE%\.wystaw\wystaw-release.jks` (alias `wystaw`, hasło w keystore-password.txt,
+  SHA-1 40:6F:02:9F:60:35:5B:AA:FD:F7:4B:D9:16:9E:98:B4:84:65:42:11) – POZA repo, nie commitować, zrobić kopię.
+  Sekrety ustawia użytkownik skryptem `%USERPROFILE%\.wystaw\ustaw-sekrety.ps1` (Claude nie wpisuje kluczy/haseł).
+  Domyślny klucz: `BuildConfig.DEFAULT_GEMINI_KEY` z env `WYSTAW_GEMINI_KEY` (tylko w wydaniu); własny klucz z
+  Ustawień ma pierwszeństwo (`AppSettings.config`). Klucza Claude nie wbudowujemy (płatny, da się wyciągnąć z APK).
+  Gemini dostaje nagłówki X-Android-Package/X-Android-Cert – klucz można ograniczyć w Google Cloud do pakietu
+  pl.wystaw.app + SHA-1 powyżej. Lokalne buildy (`installDebug`) mają inny podpis niż wydania – na telefonie z wersją
+  z Releases instalować tylko wydania.
+
 ## Następne kroki
 1. Przebudowa i instalacja: `.\uruchom-na-telefonie.ps1` (pisze local.properties, `gradlew installDebug` → build.log,
    potem logcat → logcat.txt).

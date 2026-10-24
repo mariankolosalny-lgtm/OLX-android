@@ -1,6 +1,7 @@
 package pl.wystaw.app.data
 
 import android.content.Context
+import pl.wystaw.app.BuildConfig
 
 /**
  * [fallbackModels] – próbowane po kolei, gdy wybrany model jest przeciążony (503), ma limit (429) albo nie istnieje (404).
@@ -22,7 +23,8 @@ enum class AiProvider(
     ),
 }
 
-data class AiConfig(val provider: AiProvider, val apiKey: String, val model: String)
+/** [usesDefaultKey] – klucz wbudowany w wydanie, a nie wpisany przez użytkownika. */
+data class AiConfig(val provider: AiProvider, val apiKey: String, val model: String, val usesDefaultKey: Boolean = false)
 
 /** Ustawienia: dostawca AI, klucz API i nazwa modelu – osobno dla każdego dostawcy. */
 object AppSettings {
@@ -35,8 +37,21 @@ object AppSettings {
         runCatching { AiProvider.valueOf(prefs(ctx).getString(KEY_PROVIDER, null) ?: "") }
             .getOrDefault(AiProvider.GEMINI)
 
+    /** Klucz wpisany przez użytkownika w Ustawieniach (pusty, jeśli korzysta z wbudowanego). */
     fun apiKey(ctx: Context, p: AiProvider): String =
         prefs(ctx).getString("key_${p.name}", "") ?: ""
+
+    /**
+     * Klucz wbudowany w wydanie z GitHuba – tylko Gemini (darmowy limit). Klucza Claude nie wbudowujemy:
+     * z publicznego APK każdy może go wyciągnąć, a Claude jest płatny za użycie.
+     */
+    fun defaultKey(p: AiProvider): String = if (p == AiProvider.GEMINI) BuildConfig.DEFAULT_GEMINI_KEY else ""
+
+    /** Klucz użytkownika ma pierwszeństwo; bez niego – wbudowany. */
+    private fun config(ctx: Context, p: AiProvider, model: String): AiConfig {
+        val own = apiKey(ctx, p)
+        return if (own.isNotBlank()) AiConfig(p, own, model) else AiConfig(p, defaultKey(p), model, usesDefaultKey = true)
+    }
 
     fun model(ctx: Context, p: AiProvider): String =
         (prefs(ctx).getString("model_${p.name}", null) ?: "").ifBlank { p.defaultModel }
@@ -51,19 +66,19 @@ object AppSettings {
 
     fun current(ctx: Context): AiConfig {
         val p = provider(ctx)
-        return AiConfig(p, apiKey(ctx, p), model(ctx, p))
+        return config(ctx, p, model(ctx, p))
     }
 
     /**
      * Kolejność prób: wybrany model, zapasowe modele tego dostawcy, potem drugi dostawca –
-     * tylko jeśli ma zapisany klucz (jego wybrany model, a po nim zapasowe).
+     * tylko jeśli ma jakiś klucz, własny albo wbudowany (jego wybrany model, a po nim zapasowe).
      */
     fun fallbackChain(ctx: Context): List<AiConfig> {
         val first = provider(ctx)
         return (listOf(first) + AiProvider.entries.filter { it != first })
-            .filter { apiKey(ctx, it).isNotBlank() }
+            .filter { config(ctx, it, "").apiKey.isNotBlank() }
             .flatMap { p ->
-                (listOf(model(ctx, p)) + p.fallbackModels).distinct().map { AiConfig(p, apiKey(ctx, p), it) }
+                (listOf(model(ctx, p)) + p.fallbackModels).distinct().map { config(ctx, p, it) }
             }
     }
 }

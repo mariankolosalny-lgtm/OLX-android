@@ -8,3 +8,6 @@ captures/
 .kotlin/
 build.log
 logcat.txt
+*.jks
+*.keystore
+*.jks.base64

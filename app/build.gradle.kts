@@ -12,15 +12,33 @@ android {
         applicationId = "pl.wystaw.app"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
+
+        // Domyślny klucz Gemini – tylko z sekretu GitHuba podczas budowania wydania (zmienna WYSTAW_GEMINI_KEY),
+        // nigdy z repozytorium. Lokalnie pusty: wtedy działa wyłącznie klucz wpisany w Ustawieniach.
+        val defaultGeminiKey = System.getenv("WYSTAW_GEMINI_KEY").orEmpty()
+        buildConfigField("String", "DEFAULT_GEMINI_KEY", "\"$defaultGeminiKey\"")
+    }
+
+    // Stały klucz podpisu wydań (sekrety GitHuba). Ten sam klucz = aktualizacje instalują się na starą wersję.
+    val releaseKeystore = System.getenv("WYSTAW_KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("WYSTAW_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("WYSTAW_KEY_ALIAS")
+                keyPassword = System.getenv("WYSTAW_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Do testów podpisujemy wersję release kluczem debug – wystarczy do instalacji z pliku APK.
-            signingConfig = signingConfigs.getByName("debug")
+            // Bez klucza wydań (lokalnie) podpisujemy kluczem debug – wystarczy do instalacji z pliku APK.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
@@ -33,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         checkReleaseBuilds = false

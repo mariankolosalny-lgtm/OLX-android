@@ -1,0 +1,56 @@
+name: Wydanie APK
+
+# Uruchamia się po wypchnięciu znacznika wersji, np.:  git tag v0.2.0 && git push origin v0.2.0
+# Buduje APK podpisany stałym kluczem (aktualizacje instalują się na starą wersję), z domyślnym kluczem Gemini,
+# i publikuje go w GitHub Releases: https://github.com/<właściciel>/<repo>/releases/latest
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Bez „packages” akcja instaluje przestarzały pakiet „tools”, którego Google już nie udostępnia.
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Klucz podpisu
+        env:
+          KEYSTORE_BASE64: ${{ secrets.WYSTAW_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then echo "Brak sekretu WYSTAW_KEYSTORE_BASE64"; exit 1; fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/wystaw-release.jks"
+
+      - name: Budowanie
+        env:
+          WYSTAW_KEYSTORE_FILE: ${{ runner.temp }}/wystaw-release.jks
+          WYSTAW_KEYSTORE_PASSWORD: ${{ secrets.WYSTAW_KEYSTORE_PASSWORD }}
+          WYSTAW_KEY_PASSWORD: ${{ secrets.WYSTAW_KEYSTORE_PASSWORD }}
+          WYSTAW_KEY_ALIAS: wystaw
+          WYSTAW_GEMINI_KEY: ${{ secrets.WYSTAW_GEMINI_KEY }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk "Wystaw-${GITHUB_REF_NAME}.apk"
+
+      - name: Publikacja w Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "Wystaw-${GITHUB_REF_NAME}.apk" \
+            --title "Wystaw $GITHUB_REF_NAME" \
+            --notes "Pobierz plik Wystaw-${GITHUB_REF_NAME}.apk na telefonie i otwórz go, żeby zainstalować."

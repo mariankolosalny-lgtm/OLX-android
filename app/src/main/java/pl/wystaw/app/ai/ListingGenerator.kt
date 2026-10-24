@@ -1,6 +1,7 @@
 package pl.wystaw.app.ai
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
@@ -16,6 +17,7 @@ import pl.wystaw.app.data.AiProvider
 import pl.wystaw.app.data.Listing
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 /** [retryable] – błąd po stronie modelu (przeciążenie, limit, brak modelu, sieć): warto spróbować innego modelu. */
@@ -45,23 +47,46 @@ object ListingGenerator {
 
         val images = photos.take(MAX_PHOTOS_FOR_AI).map { encodeJpeg(ctx, it) }
         val prompt = buildPrompt(sellerHint)
+        val app = AppIdentity.of(ctx)
         val failures = mutableListOf<String>()
         for (config in configs) {
             try {
-                return generateWith(config, images, prompt)
+                return generateWith(config, images, prompt, app)
             } catch (e: AiException) {
                 if (!e.retryable) throw e
                 failures += "${config.model}: ${e.message?.take(80)}"
             }
         }
+        val defaultHint = if (configs.any { it.usesDefaultKey }) {
+            "\nWbudowany klucz Wystaw mógł wyczerpać wspólny limit – wpisz własny klucz w Ustawieniach."
+        } else {
+            ""
+        }
         throw AiException(
-            "Żaden model AI nie odpowiedział – spróbuj za chwilę. Próbowano:\n" + failures.joinToString("\n")
+            "Żaden model AI nie odpowiedział – spróbuj za chwilę. Próbowano:\n" + failures.joinToString("\n") + defaultHint
         )
     }
 
-    private fun generateWith(config: AiConfig, images: List<String>, prompt: String): Listing {
+    /**
+     * Pakiet i odcisk SHA-1 podpisu aplikacji. Google sprawdza je, gdy klucz Gemini ma w Google Cloud ograniczenie
+     * „Aplikacje na Androida” – wtedy wyciągnięty z APK klucz nie zadziała poza Wystaw (bez tych nagłówków).
+     */
+    private class AppIdentity(val packageName: String, val certSha1: String) {
+        companion object {
+            fun of(ctx: Context): AppIdentity {
+                val sha1 = runCatching {
+                    val info = ctx.packageManager.getPackageInfo(ctx.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                    val cert = info.signingInfo!!.apkContentsSigners.first().toByteArray()
+                    MessageDigest.getInstance("SHA-1").digest(cert).joinToString("") { "%02X".format(it) }
+                }.getOrDefault("")
+                return AppIdentity(ctx.packageName, sha1)
+            }
+        }
+    }
+
+    private fun generateWith(config: AiConfig, images: List<String>, prompt: String, app: AppIdentity): Listing {
         val text = when (config.provider) {
-            AiProvider.GEMINI -> callGemini(config, images, prompt)
+            AiProvider.GEMINI -> callGemini(config, images, prompt, app)
             AiProvider.CLAUDE -> callClaude(config, images, prompt)
         }
         val json = extractJson(text)
@@ -114,7 +139,7 @@ object ListingGenerator {
         return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
     }
 
-    private fun callGemini(config: AiConfig, images: List<String>, prompt: String): String {
+    private fun callGemini(config: AiConfig, images: List<String>, prompt: String, app: AppIdentity): String {
         val parts = JSONArray()
         images.forEach { data ->
             parts.put(JSONObject().put("inline_data", JSONObject().put("mime_type", "image/jpeg").put("data", data)))
@@ -127,6 +152,8 @@ object ListingGenerator {
         val request = Request.Builder()
             .url("https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent")
             .header("x-goog-api-key", config.apiKey)
+            .header("X-Android-Package", app.packageName)
+            .header("X-Android-Cert", app.certSha1)
             .post(body.toString().toRequestBody(JSON_TYPE))
             .build()
 

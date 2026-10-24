@@ -2,6 +2,18 @@
 
 Aplikacja robi ogłoszenie z wybranych zdjęć: AI rozpoznaje przedmiot, pisze tytuł, opis i parametry, dobiera kategorię i szacuje cenę. Potem otwiera aplikację OLX. Gdy pokaże się formularz dodawania ogłoszenia, usługa ułatwień dostępu sama wpisuje w niego tytuł, opis i cenę.
 
+## Pobieranie
+
+Najnowszy plik APK: **https://github.com/mariankolosalny-lgtm/OLX-android/releases/latest**
+Otwórz link na telefonie, pobierz `Wystaw-vX.Y.Z.apk` i zainstaluj. Kolejne wersje instalują się na poprzednią
+(ten sam klucz podpisu), bez utraty ustawień.
+
+Wydanie ma wbudowany klucz Gemini, więc aplikacja działa od razu. W Ustawieniach można wpisać własny klucz –
+wtedy ma on pierwszeństwo (własny limit).
+
+**Nowe wydanie:** `git tag v0.2.1 && git push origin v0.2.1` – workflow „Wydanie APK” zbuduje i opublikuje plik.
+Wymaga sekretów `WYSTAW_KEYSTORE_BASE64`, `WYSTAW_KEYSTORE_PASSWORD` i `WYSTAW_GEMINI_KEY`.
+
 ## Jak zbudować plik APK
 
 **Sposób A – GitHub (bez instalowania niczego):**

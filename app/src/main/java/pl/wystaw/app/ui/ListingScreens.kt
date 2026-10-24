@@ -408,7 +408,12 @@ fun SettingsScreen(vm: MainViewModel) {
             OutlinedTextField(
                 value = apiKey,
                 onValueChange = { apiKey = it },
-                label = { Text("Klucz API") },
+                label = { Text(if (AppSettings.defaultKey(provider).isNotBlank()) "Własny klucz API (opcjonalnie)" else "Klucz API") },
+                supportingText = if (AppSettings.defaultKey(provider).isNotBlank()) {
+                    { Text("Puste = wbudowany klucz Wystaw (wspólny limit). Wpisz własny, żeby korzystać z własnego limitu.") }
+                } else {
+                    null
+                },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -429,7 +434,7 @@ fun SettingsScreen(vm: MainViewModel) {
             InfoCard(Color.White) {
                 Text("Prywatność", fontWeight = FontWeight.Bold)
                 Text(
-                    "Zdjęcia są wysyłane tylko do wybranego dostawcy AI w celu przygotowania ogłoszenia. Klucz jest zapisany wyłącznie na tym telefonie.",
+                    "Zdjęcia są wysyłane tylko do wybranego dostawcy AI w celu przygotowania ogłoszenia. Własny klucz jest zapisany wyłącznie na tym telefonie.",
                     color = Muted, fontSize = 13.sp, lineHeight = 19.sp,
                 )
             }
